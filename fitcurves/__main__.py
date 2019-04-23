@@ -2,11 +2,13 @@
 
      (c) Volker Poplawski 2014
 """
-from __future__ import print_function
-from numpy import array
-from bezier import *
-from fitCurves import *
-from Tkinter import *
+import numpy as np
+from . import bezier
+from .fitCurves import fitCurve
+try:
+    import tkinter as tk
+except ImportError:
+    import Tkinter as tk
 
 
 # center of bounding box
@@ -15,14 +17,14 @@ def cntr(x1, y1, x2, y2):
 
 
 # tkinter Canvas plus some addons
-class MyCanvas(Canvas):
+class MyCanvas(tk.Canvas):
     def create_polyline(self, points, **kwargs):
         for p1, p2 in zip(points, points[1:]):
             self.create_line(p1, p2, kwargs)
 
 
     def create_bezier(self, b, tag):
-        self.create_polyline([bezier.q(b, t/50.0).tolist() for t in xrange(0, 51)], tag=tag, fill='blue', width='2') # there are better ways to draw a bezier
+        self.create_polyline([bezier.q(b, t/50.0).tolist() for t in range(0, 51)], tag=tag, fill='blue', width='2') # there are better ways to draw a bezier
         self.create_line(b[0].tolist(), b[1].tolist(), tag=tag)
         self.create_point(b[1][0], b[1][1], 2, fill='black', tag=tag)
         self.create_line(b[3].tolist(), b[2].tolist(), tag=tag)
@@ -43,16 +45,16 @@ class MyCanvas(Canvas):
 
 class MainObject:
     def run(self):
-        root = Tk()
+        root = tk.Tk()
 
         self.canvas = MyCanvas(root, bg='white', width=400, height=400)
-        self.canvas.pack(side=LEFT)
+        self.canvas.pack(side=tk.LEFT)
 
-        frame = Frame(root, relief=SUNKEN, borderwidth=1)
-        frame.pack(side=LEFT, fill=Y)
-        label = Label(frame, text='Max Error')
+        frame = tk.Frame(root, relief=tk.SUNKEN, borderwidth=1)
+        frame.pack(side=tk.LEFT, fill=tk.Y)
+        label = tk.Label(frame, text='Max Error')
         label.pack()
-        self.spinbox = Spinbox(frame, width=8, from_=0.0, to=1000000.0, command=self.onSpinBoxValueChange)
+        self.spinbox = tk.Spinbox(frame, width=8, from_=0.0, to=1000000.0, command=self.onSpinBoxValueChange)
         self.spinbox.insert(0, 10.0)
         self.spinbox.pack()
 
@@ -106,7 +108,7 @@ class MainObject:
             return
 
         self.canvas.delete('bezier')
-        points = array([self.canvas.pos(p) for p in self.points])
+        points = np.array([self.canvas.pos(p) for p in self.points])
         beziers = fitCurve(points, float(self.spinbox.get())**2)
         for bezier in beziers:
             self.canvas.create_bezier(bezier, tag='bezier')

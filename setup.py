@@ -2,16 +2,26 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
+# Load version from __init__.py
+__version__ = "Undefined"
+for line in open('fitcurves/__init__.py'):
+    if (line.startswith('__version__')):
+        exec(line.strip())
+
 config = {
     'name': 'fitcurves',
-    'author': 'Spencer Bliven',
-    'author_email': 'spencer.bliven@gmail.com',
-    'url': 'https://github.com/sbliven/fitCurves',
-    'description': '',
+    'author': 'Volker Poplawski',
+    'author_email': 'volker@poplawski.de',
+    'url': 'https://github.com/volkerp/fitCurves',
+    'description': '''Python implementation of Philip J. Schneider's '''
+        '''"Algorithm for Automatically Fitting Digitized Curves" from the '''
+        '''book "Graphics Gems"''',
     'long_description': open('README.md', 'r').read(),
     'license': 'MIT',
-    'version': '0.0.1',
-    'install_requires': [],
+    'version': __version__,
+    'install_requires': [
+        "numpy",
+    ],
     'classifiers': [
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",

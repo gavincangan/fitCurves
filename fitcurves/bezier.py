@@ -1,5 +1,4 @@
-from __future__ import print_function
-from numpy import *
+import numpy as np
 
 
 # evaluates cubic bezier at t, return point

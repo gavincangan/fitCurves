@@ -3,9 +3,8 @@
     by Philip J. Schneider
     "Graphics Gems", Academic Press, 1990
 """
-from __future__ import print_function
-from numpy import *
-import bezier
+import numpy as np
+from . import bezier
 
 
 # Fit one (ore more) Bezier curves to a set of points
@@ -18,7 +17,7 @@ def fitCurve(points, maxError):
 def fitCubic(points, leftTangent, rightTangent, error):
     # Use heuristic if region only has two points in it
     if (len(points) == 2):
-        dist = linalg.norm(points[0] - points[1]) / 3.0
+        dist = np.linalg.norm(points[0] - points[1]) / 3.0
         bezCurve = [points[0], points[0] + leftTangent * dist, points[1] + rightTangent * dist, points[1]]
         return [bezCurve]
 
@@ -32,7 +31,7 @@ def fitCubic(points, leftTangent, rightTangent, error):
 
     # If error not too large, try some reparameterization and iteration
     if maxError < error**2:
-        for i in range(20):
+        for _ in range(20):
             uPrime = reparameterize(bezCurve, points, u)
             bezCurve = generateBezier(points, uPrime, leftTangent, rightTangent)
             maxError, splitPoint = computeMaxError(points, bezCurve, uPrime)
@@ -53,25 +52,25 @@ def generateBezier(points, parameters, leftTangent, rightTangent):
     bezCurve = [points[0], None, None, points[-1]]
 
     # compute the A's
-    A = zeros((len(parameters), 2, 2))
+    A = np.zeros((len(parameters), 2, 2))
     for i, u in enumerate(parameters):
         A[i][0] = leftTangent  * 3*(1-u)**2 * u
         A[i][1] = rightTangent * 3*(1-u)    * u**2
 
     # Create the C and X matrices
-    C = zeros((2, 2))
-    X = zeros(2)
+    C = np.zeros((2, 2))
+    X = np.zeros(2)
 
     for i, (point, u) in enumerate(zip(points, parameters)):
-        C[0][0] += dot(A[i][0], A[i][0])
-        C[0][1] += dot(A[i][0], A[i][1])
-        C[1][0] += dot(A[i][0], A[i][1])
-        C[1][1] += dot(A[i][1], A[i][1])
+        C[0][0] += np.dot(A[i][0], A[i][0])
+        C[0][1] += np.dot(A[i][0], A[i][1])
+        C[1][0] += np.dot(A[i][0], A[i][1])
+        C[1][1] += np.dot(A[i][1], A[i][1])
 
         tmp = point - bezier.q([points[0], points[0], points[-1], points[-1]], u)
 
-        X[0] += dot(A[i][0], tmp)
-        X[1] += dot(A[i][1], tmp)
+        X[0] += np.dot(A[i][0], tmp)
+        X[1] += np.dot(A[i][1], tmp)
 
     # Compute the determinants of C and X
     det_C0_C1 = C[0][0] * C[1][1] - C[1][0] * C[0][1]
@@ -85,7 +84,7 @@ def generateBezier(points, parameters, leftTangent, rightTangent):
     # If alpha negative, use the Wu/Barsky heuristic (see text) */
     # (if alpha is 0, you get coincident control points that lead to
     # divide by zero in any subsequent NewtonRaphsonRootFind() call. */
-    segLength = linalg.norm(points[0] - points[-1])
+    segLength = np.linalg.norm(points[0] - points[-1])
     epsilon = 1.0e-6 * segLength
     if alpha_l < epsilon or alpha_r < epsilon:
         # fall back on standard (probably inaccurate) formula, and subdivide further if needed.
@@ -136,7 +135,7 @@ def newtonRaphsonRootFind(bez, point, u):
 def chordLengthParameterize(points):
     u = [0.0]
     for i in range(1, len(points)):
-        u.append(u[i-1] + linalg.norm(points[i] - points[i-1]))
+        u.append(u[i-1] + np.linalg.norm(points[i] - points[i-1]))
 
     for i, _ in enumerate(u):
         u[i] = u[i] / u[-1]
@@ -148,7 +147,7 @@ def computeMaxError(points, bez, parameters):
     maxDist = 0.0
     splitPoint = len(points)/2
     for i, (point, u) in enumerate(zip(points, parameters)):
-        dist = linalg.norm(bezier.q(bez, u)-point)**2
+        dist = np.linalg.norm(bezier.q(bez, u)-point)**2
         if dist > maxDist:
             maxDist = dist
             splitPoint = i
@@ -157,5 +156,5 @@ def computeMaxError(points, bez, parameters):
 
 
 def normalize(v):
-    return v / linalg.norm(v)
+    return v / np.linalg.norm(v)
 
