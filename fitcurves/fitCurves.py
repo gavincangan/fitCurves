@@ -6,15 +6,16 @@
 import numpy as np
 from . import bezier
 
+import pdb
 
 # Fit one (ore more) Bezier curves to a set of points
 def fitCurve(points, maxError):
     leftTangent = normalize(points[1] - points[0])
     rightTangent = normalize(points[-2] - points[-1])
-    return fitCubic(points, leftTangent, rightTangent, maxError)
+    return fitCubic(points, leftTangent, rightTangent, maxError, _dim=points[0].shape[-1])
 
 
-def fitCubic(points, leftTangent, rightTangent, error):
+def fitCubic(points, leftTangent, rightTangent, error, _dim=2):
     # Use heuristic if region only has two points in it
     if (len(points) == 2):
         dist = np.linalg.norm(points[0] - points[1]) / 3.0
@@ -23,7 +24,7 @@ def fitCubic(points, leftTangent, rightTangent, error):
 
     # Parameterize points, and attempt to fit curve
     u = chordLengthParameterize(points)
-    bezCurve = generateBezier(points, u, leftTangent, rightTangent)
+    bezCurve = generateBezier(points, u, leftTangent, rightTangent, _dim=_dim)
     # Find max deviation of points to fitted curve
     maxError, splitPoint = computeMaxError(points, bezCurve, u)
     if maxError < error:
@@ -33,7 +34,7 @@ def fitCubic(points, leftTangent, rightTangent, error):
     if maxError < error**2:
         for _ in range(20):
             uPrime = reparameterize(bezCurve, points, u)
-            bezCurve = generateBezier(points, uPrime, leftTangent, rightTangent)
+            bezCurve = generateBezier(points, uPrime, leftTangent, rightTangent, _dim=_dim)
             maxError, splitPoint = computeMaxError(points, bezCurve, uPrime)
             if maxError < error:
                 return [bezCurve]
@@ -42,17 +43,16 @@ def fitCubic(points, leftTangent, rightTangent, error):
     # Fitting failed -- split at max error point and fit recursively
     beziers = []
     centerTangent = normalize(points[splitPoint-1] - points[splitPoint+1])
-    beziers += fitCubic(points[:splitPoint+1], leftTangent, centerTangent, error)
-    beziers += fitCubic(points[splitPoint:], -centerTangent, rightTangent, error)
+    beziers += fitCubic(points[:splitPoint+1], leftTangent, centerTangent, error, _dim=_dim)
+    beziers += fitCubic(points[splitPoint:], -centerTangent, rightTangent, error, _dim=_dim)
 
     return beziers
 
 
-def generateBezier(points, parameters, leftTangent, rightTangent):
+def generateBezier(points, parameters, leftTangent, rightTangent, _dim=2):
     bezCurve = [points[0], None, None, points[-1]]
-
     # compute the A's
-    A = np.zeros((len(parameters), 2, 2))
+    A = np.zeros((len(parameters), 2, _dim))
     for i, u in enumerate(parameters):
         A[i][0] = leftTangent  * 3*(1-u)**2 * u
         A[i][1] = rightTangent * 3*(1-u)    * u**2
