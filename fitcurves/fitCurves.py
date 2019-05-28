@@ -6,8 +6,6 @@
 import numpy as np
 from . import bezier
 
-import pdb
-
 # Fit one (ore more) Bezier curves to a set of points
 def fitCurve(points, maxError):
     leftTangent = normalize(points[1] - points[0])
